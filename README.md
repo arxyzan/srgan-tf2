@@ -1,4 +1,4 @@
-# Single Image Super-Resolution with EDSR, WDSR and SRGAN (Incomplete)
+# Single Image Super-Resolution with SRGAN (Incomplete)
 
 ## Introduction
 
