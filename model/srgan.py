@@ -1,4 +1,4 @@
-from tensorflow.keras.layers import Add, BatchNormalization, Conv2D, Dense, Flatten, Input, LeakyReLU, PReLU, Lambda
+from tensorflow.keras.layers import Add, BatchNormalization, Conv2D, Dense, Flatten, LeakyReLU, PReLU, Lambda
 from tensorflow.keras import models, layers
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.applications.vgg19 import VGG19
@@ -10,12 +10,12 @@ class ResBlock(layers.Layer):
         super(ResBlock, self).__init__()
         self.conv1 = Conv2D(num_filters, kernel_size=3, padding='same')
         self.bn1 = BatchNormalization(momentum=momentum)
-        self.bn2 = BatchNormalization(momentum=momentum)
         self.prelu = PReLU(shared_axes=[1, 2])
         self.conv2 = Conv2D(num_filters, kernel_size=3, padding='same')
+        self.bn2 = BatchNormalization(momentum=momentum)
         self.add = Add()
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs):
         x = self.conv1(inputs)
         x = self.bn1(x)
         x = self.prelu(x)
@@ -32,7 +32,7 @@ class Upsample(layers.Layer):
         self.shuffle = Lambda(pixel_shuffle(scale=2))
         self.prelu = PReLU(shared_axes=[1, 2])
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs):
         x = self.conv(inputs)
         x = self.shuffle(x)
         x = self.prelu(x)
@@ -47,7 +47,7 @@ class DiscriminatorBlock(layers.Layer):
         self.bn = BatchNormalization(momentum=momentum)
         self.lrelu = LeakyReLU(alpha=0.2)
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs):
         x = self.conv(inputs)
         if self.batchnorm:
             x = self.bn(x)
@@ -73,7 +73,7 @@ class Discriminator(models.Model):
         self.lrelu = LeakyReLU(alpha=0.2)
         self.fc2 = Dense(1, activation='sigmoid')
 
-    def call(self, inputs, training=None, mask=None):
+    def call(self, inputs):
         x = self.normalize(inputs)
         x = self.discriminator1(x)
         x = self.discriminator2(x)
@@ -101,7 +101,6 @@ class SRGAN(models.Model):
         self.res_block = Sequential()
         for _ in range(num_res_blocks):
             self.res_block.add(ResBlock(num_filters))
-        self.res_block = ResBlock(num_filters)
         self.conv2 = Conv2D(num_filters, kernel_size=3, padding='same')
         self.bn = BatchNormalization(momentum=0.8)
         self.conv3 = Conv2D(3, kernel_size=9, padding='same', activation='tanh')
@@ -111,7 +110,7 @@ class SRGAN(models.Model):
         self.upsample2 = Upsample(num_filters=num_filters * 4)
         self.denormalize = Lambda(denormalize_m11)
 
-    def call(self, inputs, training=None, mask=None):
+    def call(self, inputs):
         x = self.normalize(inputs)
         x = self.conv1(x)
         x = x_1 = self.prelu(x)

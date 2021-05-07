@@ -1,9 +1,16 @@
 import numpy as np
+from numpy.lib.npyio import load
 import tensorflow as tf
-
+from utils import load_image
 
 DIV2K_RGB_MEAN = np.array([0.4488, 0.4371, 0.4040]) * 255
 
+def resolve_image(model, img_path):
+    img_array = load_image(img_path)
+    sr_array = resolve_single(img_array)
+    img = np.squeeze(np.array(sr_array))
+    img = img[...,::-1]
+    return img
 
 def resolve_single(model, lr):
     return resolve(model, tf.expand_dims(lr, axis=0))[0]
