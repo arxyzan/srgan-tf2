@@ -1,4 +1,12 @@
 .ipynb_checkpoints
 .div2k
 .ckpt
+__pycache__
+*.h5
+*.index
+*.data*
+*.pyc
+checkpoint
+
+
 
