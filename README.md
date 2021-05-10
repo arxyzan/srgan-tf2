@@ -10,10 +10,10 @@ Examples in this section require following pre-trained weights for running (see 
 
 ### Pre-trained weights
 
-- [weights-srgan.tar.gz](https://martin-krasser.de/sisr/weights-srgan.tar.gz) 
+- [srgan.zip](https://drive.google.com/file/d/1tYkYCiWIHtEBFJSoQLmMY5msdtd_CkKL/view?usp=sharing)
     - SRGAN as described in the SRGAN paper: 1.55M parameters, trained with VGG54 content loss.
     
-After download, extract them in the root folder of the project with
+After download, extract them in the weights folder of the project with
 
     tar xvfz weights-<...>.tar.gz
 
@@ -21,9 +21,11 @@ After download, extract them in the root folder of the project with
 ### SRGAN
 
 ```python
-from model.srgan import generator
+from model.srgan import SRGAN
+import tensorflow as tf
 
-model = generator()
+model = SRGAN()
+model(tf.ones((1, 24, 24, 3)))
 model.load_weights('weights/srgan/gan_generator.h5')
 
 lr = load_image('demo/0869x4-crop.png')
@@ -32,7 +34,7 @@ sr = resolve_single(model, lr)
 plot_sample(lr, sr)
 ```
 
-![result-srgan](docs/images/result-srgan.png)
+![result-srgan](results/srgan.png)
 
 ## DIV2K dataset
 
@@ -45,14 +47,14 @@ different format for faster loading.
 ```python
 from data import DIV2K
 
-train_loader = DIV2K(scale=4,             # 2, 3, 4 or 8
-                     downgrade='bicubic', # 'bicubic', 'unknown', 'mild' or 'difficult' 
-                     subset='train')      # Training dataset are images 001 - 800
+train_loader = DIV2K(scale=4,
+                     downgrade='bicubic', 
+                     subset='train')
                      
 # Create a tf.data.Dataset          
-train_ds = train_loader.dataset(batch_size=16,         # batch size as described in the EDSR and WDSR papers
-                                random_transform=True, # random crop, flip, rotate as described in the EDSR paper
-                                repeat_count=None)     # repeat iterating over training images indefinitely
+train_ds = train_loader.dataset(batch_size=16,     
+                                random_transform=True,
+                                repeat_count=None)
 
 # Iterate over LR/HR image pairs                                
 for lr, hr in train_ds:
@@ -91,36 +93,41 @@ papers.
 ### Generator pre-training
 
 ```python
-from model.srgan import generator
-from train import SrganGeneratorTrainer
+import tensorflow as tf
+from model.srgan import SRGAN, Discriminator
+from train import SrganTrainer
 
 # Create a training context for the generator (SRResNet) alone.
-pre_trainer = SrganGeneratorTrainer(model=generator(), checkpoint_dir=f'.ckpt/pre_generator')
-
-# Pre-train the generator with 1,000,000 steps (100,000 works fine too). 
-pre_trainer.train(train_ds, valid_ds.take(10), steps=1000000, evaluate_every=1000)
+generator = SRGAN()
+pre_trainer.train(train_ds,
+                  valid_ds.take(1000),
+                  steps=200000, 
+                  evaluate_every=1000, 
+                  save_best_only=False)
 
 # Save weights of pre-trained generator (needed for fine-tuning with GAN).
-pre_trainer.model.save_weights('weights/srgan/pre_generator.h5')
+pre_trainer.model.save_weights(weights_file('pre_generator.h5'))
 ```
 
 ### Generator fine-tuning (GAN)
 
 ```python
-from model.srgan import generator, discriminator
+import tensorflow as tf
+from model.srgan import SRGAN, Discriminator
 from train import SrganTrainer
 
 # Create a new generator and init it with pre-trained weights.
-gan_generator = generator()
-gan_generator.load_weights('weights/srgan/pre_generator.h5')
+model = SRGAN()
+model(tf.ones((1, 24, 24, 3)))
+model.load_weights('weights/srgan/pre_generator.h5')
 
 # Create a training context for the GAN (generator + discriminator).
-gan_trainer = SrganTrainer(generator=gan_generator, discriminator=discriminator())
+srgan_trainer = SrganTrainer(generator=model, discriminator=discriminator)
 
 # Train the GAN with 200,000 steps.
-gan_trainer.train(train_ds, steps=200000)
+srgan_trainer.train(train_ds, steps=200000)
 
 # Save weights of generator and discriminator.
-gan_trainer.generator.save_weights('weights/srgan/gan_generator.h5')
-gan_trainer.discriminator.save_weights('weights/srgan/gan_discriminator.h5')
+srgan_trainer.generator.save_weights('weights/srgan/gan_generator.h5')
+srgan_trainer.discriminator.save_weights('weights/srgan/gan_discriminator.h5')
 ```
