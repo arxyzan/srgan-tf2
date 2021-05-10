@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This project is a reimplementation of SRGAN forked from [this repo](https://krasserm.github.io/2019/09/04/super-resolution/) for super resolution. The only difference is that we used Keras model subclassing to implement SRGAN model instead of Functional API.
+This project is a reimplementation of SRGAN forked from [this repo](https://krasserm.github.io/2019/09/04/super-resolution/) for super resolution. The only difference is that we used Keras model subclassing to implement the SRGAN model instead of Functional API.
 
 ## Getting started 
 
@@ -13,10 +13,9 @@ Examples in this section require following pre-trained weights for running (see 
 - [srgan.zip](https://drive.google.com/file/d/1tYkYCiWIHtEBFJSoQLmMY5msdtd_CkKL/view?usp=sharing)
     - SRGAN as described in the SRGAN paper: 1.55M parameters, trained with VGG54 content loss.
     
-After download, extract them in the weights folder of the project with
+Download and extract them in the weights folder of the project:
 
     tar xvfz weights-<...>.tar.gz
-
 
 ### SRGAN
 
@@ -131,3 +130,6 @@ srgan_trainer.train(train_ds, steps=200000)
 srgan_trainer.generator.save_weights('weights/srgan/gan_generator.h5')
 srgan_trainer.discriminator.save_weights('weights/srgan/gan_discriminator.h5')
 ```
+### References
+[super-resolution](https://github.com/krasserm/super-resolution) by [@krasserm](https://github.com/krasserm)<br>
+[SRGAN-PyTorch](https://github.com/Lornatang/SRGAN-PyTorch) by [@Lornatang](https://github.com/Lornatang)
