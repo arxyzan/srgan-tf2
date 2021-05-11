@@ -1,4 +1,4 @@
-# Single Image Super-Resolution with SRGAN (Incomplete)
+# Single Image Super-Resolution with SRGAN
 
 ## Introduction
 
